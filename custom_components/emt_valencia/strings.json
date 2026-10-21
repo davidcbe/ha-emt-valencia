@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "EMT València",
+        "description": "Introduce el número de parada de EMT València.",
+        "data": {
+          "stop_id": "Número de parada"
+        }
+      }
+    },
+    "error": {
+      "invalid_stop_id": "El número de parada solo puede contener dígitos."
+    },
+    "abort": {
+      "already_configured": "Esta parada ya está configurada."
+    }
+  }
+}
