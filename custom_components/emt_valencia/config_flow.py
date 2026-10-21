@@ -12,7 +12,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
 from .const import (
-    CONF_DEVICE_TRACKERS, CONF_FAVORITE_STOPS, CONF_MAX_NEARBY_STOPS,
+    CONF_FAVORITE_STOPS, CONF_MAX_NEARBY_STOPS, CONF_MOBILE_DEVICES,
     CONF_MOVEMENT_THRESHOLD, CONF_SCAN_INTERVAL, CONF_SEARCH_RADIUS,
     DEFAULT_MAX_NEARBY_STOPS, DEFAULT_MOVEMENT_THRESHOLD,
     DEFAULT_SEARCH_RADIUS, DOMAIN, MAX_SCAN_INTERVAL, MIN_SCAN_INTERVAL,
@@ -43,8 +43,10 @@ def _favorite_text(stops: list[dict[str, str]]) -> str:
 def _schema(defaults: Mapping[str, Any]) -> vol.Schema:
     """Build the same UI form for setup and later options."""
     return vol.Schema({
-        vol.Optional(CONF_DEVICE_TRACKERS, default=defaults.get(CONF_DEVICE_TRACKERS, [])):
-            selector.EntitySelector(selector.EntitySelectorConfig(domain="device_tracker", multiple=True)),
+        vol.Optional(CONF_MOBILE_DEVICES, default=defaults.get(CONF_MOBILE_DEVICES, [])):
+            selector.DeviceSelector(selector.DeviceSelectorConfig(
+                integration="mobile_app", multiple=True
+            )),
         vol.Optional(CONF_FAVORITE_STOPS, default=_favorite_text(defaults.get(CONF_FAVORITE_STOPS, []))):
             selector.TextSelector(),
         vol.Optional(CONF_SEARCH_RADIUS, default=defaults.get(CONF_SEARCH_RADIUS, DEFAULT_SEARCH_RADIUS)):
@@ -60,7 +62,7 @@ def _schema(defaults: Mapping[str, Any]) -> vol.Schema:
 
 def _normalize(user_input: Mapping[str, Any]) -> dict[str, Any]:
     return {
-        CONF_DEVICE_TRACKERS: list(user_input.get(CONF_DEVICE_TRACKERS, [])),
+        CONF_MOBILE_DEVICES: list(user_input.get(CONF_MOBILE_DEVICES, [])),
         CONF_FAVORITE_STOPS: _parse_favorites(str(user_input.get(CONF_FAVORITE_STOPS, ""))),
         CONF_SEARCH_RADIUS: int(user_input[CONF_SEARCH_RADIUS]),
         CONF_MAX_NEARBY_STOPS: int(user_input[CONF_MAX_NEARBY_STOPS]),

@@ -10,11 +10,13 @@ from typing import Any
 import emtvlcapi
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
-    CONF_DEVICE_TRACKERS, CONF_FAVORITE_STOPS, CONF_MAX_NEARBY_STOPS,
+    CONF_DEVICE_TRACKERS, CONF_FAVORITE_STOPS, CONF_MAX_NEARBY_STOPS, CONF_MOBILE_DEVICES,
     CONF_MOVEMENT_THRESHOLD, CONF_SCAN_INTERVAL, CONF_SEARCH_RADIUS, CONF_STOP_ID,
     DEFAULT_MAX_NEARBY_STOPS, DEFAULT_MOVEMENT_THRESHOLD, DEFAULT_SCAN_INTERVAL,
     DEFAULT_SEARCH_RADIUS, DOMAIN,
@@ -51,7 +53,7 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @property
     def config(self) -> dict[str, Any]:
         config: dict[str, Any] = {
-            CONF_DEVICE_TRACKERS: [], CONF_FAVORITE_STOPS: [],
+            CONF_DEVICE_TRACKERS: [], CONF_MOBILE_DEVICES: [], CONF_FAVORITE_STOPS: [],
             CONF_SEARCH_RADIUS: DEFAULT_SEARCH_RADIUS,
             CONF_MAX_NEARBY_STOPS: DEFAULT_MAX_NEARBY_STOPS,
             CONF_SCAN_INTERVAL: int(DEFAULT_SCAN_INTERVAL.total_seconds()),
@@ -64,10 +66,34 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config[CONF_FAVORITE_STOPS] = [{"stop_id": str(self.entry.data[CONF_STOP_ID]), "name": ""}]
         return config
 
+    @property
+    def tracker_keys(self) -> list[str]:
+        """Return stable keys for configured Companion devices or legacy entities."""
+        if CONF_MOBILE_DEVICES in self.entry.data or CONF_MOBILE_DEVICES in self.entry.options:
+            return self.config[CONF_MOBILE_DEVICES]
+        return self.config[CONF_DEVICE_TRACKERS]
+
+    def _tracker_for_key(self, key: str) -> tuple[str | None, str]:
+        """Resolve a Companion device to its usable GPS tracker.
+
+        Older entries store an entity id directly and remain supported.
+        """
+        if key.startswith("device_tracker."):
+            state = self.hass.states.get(key)
+            return key, state.name if state else key
+        device = dr.async_get(self.hass).async_get(key)
+        name = (device.name_by_user or device.name) if device else key
+        candidates = [entry.entity_id for entry in er.async_entries_for_device(er.async_get(self.hass), key)
+                      if entry.domain == "device_tracker" and entry.platform == "mobile_app"]
+        # Prefer the tracker that currently carries valid latitude/longitude.
+        entity_id = next((item for item in candidates if coords(self.hass.states.get(item))), None)
+        return entity_id or (candidates[0] if candidates else None), name
+
     def async_start(self) -> Any:
-        trackers = self.config[CONF_DEVICE_TRACKERS]
-        if trackers:
-            self._unsub = async_track_state_change_event(self.hass, trackers, self._tracker_changed)
+        entities = [entity_id for key in self.tracker_keys
+                    if (entity_id := self._tracker_for_key(key)[0])]
+        if entities:
+            self._unsub = async_track_state_change_event(self.hass, entities, self._tracker_changed)
         return self.async_shutdown
 
     @callback
@@ -79,7 +105,8 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @callback
     def _tracker_changed(self, event: Event) -> None:
         entity_id, new = event.data["entity_id"], coords(event.data.get("new_state"))
-        old = self._locations.get(entity_id)
+        key = next((item for item in self.tracker_keys if self._tracker_for_key(item)[0] == entity_id), entity_id)
+        old = self._locations.get(key)
         if new and old and distance_m(*old, *new) >= self.config[CONF_MOVEMENT_THRESHOLD]:
             self.async_request_refresh()
 
@@ -126,24 +153,26 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         trackers: dict[str, Any] = {}
         unique: dict[str, dict[str, Any]] = {}
-        for entity_id in self.config[CONF_DEVICE_TRACKERS]:
-            state, position = self.hass.states.get(entity_id), coords(self.hass.states.get(entity_id))
-            tracker: dict[str, Any] = {"entity_id": entity_id, "name": state.name if state else entity_id, "nearby_stops": []}
+        for key in self.tracker_keys:
+            entity_id, name = self._tracker_for_key(key)
+            state = self.hass.states.get(entity_id) if entity_id else None
+            position = coords(state)
+            tracker: dict[str, Any] = {"entity_id": entity_id, "name": name, "nearby_stops": []}
             if not position:
                 tracker["error"] = "No valid GPS coordinates"
             else:
-                old, cached = self._locations.get(entity_id), self._cache.get(entity_id)
+                old, cached = self._locations.get(key), self._cache.get(key)
                 if cached is None or old is None or distance_m(*old, *position) >= self.config[CONF_MOVEMENT_THRESHOLD]:
                     try:
                         cached = await self._nearby(*position)
                     except Exception as err:
                         cached, tracker["error"] = [], f"Nearby stop lookup failed: {err}"
-                    self._cache[entity_id], self._locations[entity_id] = cached, position
+                    self._cache[key], self._locations[key] = cached, position
                 tracker.update({"location": {"latitude": position[0], "longitude": position[1]},
                                 "location_last_updated": state.last_updated.isoformat(), "nearby_stops": [dict(x) for x in cached]})
                 for stop in cached:
                     unique[stop["stop_id"]] = stop
-            trackers[entity_id] = tracker
+            trackers[key] = tracker
         favorites: dict[str, dict[str, Any]] = {}
         for favorite in self.config[CONF_FAVORITE_STOPS]:
             stop_id = str(favorite["stop_id"])

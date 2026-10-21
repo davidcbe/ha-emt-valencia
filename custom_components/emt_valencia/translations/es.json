@@ -3,9 +3,9 @@
     "step": {
       "user": {
         "title": "EMT València",
-        "description": "Selecciona móviles opcionales y/o paradas favoritas. Las favoritas se escriben como 1585:Casa, 1622:Trabajo.",
+        "description": "Selecciona dispositivos de la app Home Assistant Companion y/o paradas favoritas. Se usa automáticamente su rastreador GPS, sin elegir entre duplicados.",
         "data": {
-          "device_trackers": "Dispositivos con ubicación",
+          "mobile_devices": "Dispositivos con Home Assistant Companion",
           "favorite_stops": "Paradas favoritas",
           "search_radius": "Radio de búsqueda",
           "max_nearby_stops": "Máximo de paradas cercanas",
@@ -15,9 +15,9 @@
       },
       "init": {
         "title": "EMT València",
-        "description": "Selecciona móviles opcionales y/o paradas favoritas. Las favoritas se escriben como 1585:Casa, 1622:Trabajo.",
+        "description": "Selecciona dispositivos de la app Home Assistant Companion y/o paradas favoritas. Se usa automáticamente su rastreador GPS, sin elegir entre duplicados.",
         "data": {
-          "device_trackers": "Dispositivos con ubicación",
+          "mobile_devices": "Dispositivos con Home Assistant Companion",
           "favorite_stops": "Paradas favoritas",
           "search_radius": "Radio de búsqueda",
           "max_nearby_stops": "Máximo de paradas cercanas",
@@ -37,9 +37,9 @@
     "step": {
       "init": {
         "title": "EMT València",
-        "description": "Selecciona móviles opcionales y/o paradas favoritas. Las favoritas se escriben como 1585:Casa, 1622:Trabajo.",
+        "description": "Selecciona dispositivos de la app Home Assistant Companion y/o paradas favoritas. Se usa automáticamente su rastreador GPS, sin elegir entre duplicados.",
         "data": {
-          "device_trackers": "Dispositivos con ubicación",
+          "mobile_devices": "Dispositivos con Home Assistant Companion",
           "favorite_stops": "Paradas favoritas",
           "search_radius": "Radio de búsqueda",
           "max_nearby_stops": "Máximo de paradas cercanas",

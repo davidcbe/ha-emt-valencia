@@ -20,7 +20,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EMTValenciaConfigEntry, 
     """Create a bounded number of stable aggregate entities."""
     coordinator = entry.runtime_data
     entities: list[SensorEntity] = [
-        EMTTrackerSensor(coordinator, tracker) for tracker in coordinator.config["device_trackers"]
+        EMTTrackerSensor(coordinator, tracker) for tracker in coordinator.tracker_keys
     ]
     entities.extend(EMTFavoriteSensor(coordinator, item["stop_id"]) for item in coordinator.config["favorite_stops"])
     async_add_entities(entities)
@@ -44,7 +44,8 @@ class EMTTrackerSensor(_BaseSensor):
         super().__init__(coordinator)
         self._tracker_id = tracker_id
         self._attr_unique_id = f"{DOMAIN}_tracker_{tracker_id}"
-        self._attr_device_info = {"identifiers": {(DOMAIN, f"tracker_{tracker_id}")}, "name": f"EMT València · {tracker_id}", "manufacturer": "EMT València", "model": "Nearby stops"}
+        _, name = coordinator._tracker_for_key(tracker_id)
+        self._attr_device_info = {"identifiers": {(DOMAIN, f"tracker_{tracker_id}")}, "name": f"EMT València · {name}", "manufacturer": "EMT València", "model": "Nearby stops"}
 
     @property
     def _data(self) -> dict[str, Any]:

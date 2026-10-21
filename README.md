@@ -5,11 +5,11 @@ It fetches the real-time arrivals for one or more EMT València stops directly
 from Home Assistant; it does not require an LXC, HTTP service, token, or YAML
 configuration.
 
-## Current scope (0.2.0)
+## Current scope (0.2.1)
 
 Each config entry can create bounded aggregate sensors (no dynamic entity flood):
 
-- One sensor per selected `device_tracker`, containing structured `nearby_stops`
+- One sensor per selected Home Assistant Companion device, containing structured `nearby_stops`
   ordered by distance, each with lines, destinations and arrivals.
 - One sensor per optional favourite stop, with its structured `arrivals`.
 - Shared live-arrival calls: a stop found for multiple mobiles or also marked as
@@ -29,8 +29,9 @@ editable favourite, so the test stop **1622** can simply be removed in Options.
    València**.
 4. Restart Home Assistant.
 5. Go to **Settings → Devices & services → Add integration**, search for
-   **EMT València**. Pick any `device_tracker` entities you want to use and/or
-   enter favourites as `1585:Casa, 1622:Trabajo`.
+   **EMT València**. Pick the phones or watches registered through Home
+   Assistant Companion (each appears once; EMT selects its GPS tracker
+   automatically) and/or enter favourites as `1585:Casa, 1622:Trabajo`.
 
 HACS only installs the integration. On first setup Home Assistant installs the
 declared Python dependency `emtvlcapi==1.0.0` automatically.

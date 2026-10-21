@@ -7,6 +7,7 @@ PLATFORMS = ["sensor"]
 
 CONF_STOP_ID = "stop_id"  # Legacy 0.1 config-entry field.
 CONF_DEVICE_TRACKERS = "device_trackers"
+CONF_MOBILE_DEVICES = "mobile_devices"
 CONF_FAVORITE_STOPS = "favorite_stops"
 CONF_SEARCH_RADIUS = "search_radius"
 CONF_MAX_NEARBY_STOPS = "max_nearby_stops"
