@@ -5,18 +5,20 @@ It fetches the real-time arrivals for one or more EMT València stops directly
 from Home Assistant; it does not require an LXC, HTTP service, token, or YAML
 configuration.
 
-## Current scope (0.1.0)
+## Current scope (0.2.0)
 
-Each config entry creates one sensor:
+Each config entry can create bounded aggregate sensors (no dynamic entity flood):
 
-- `sensor.emt_valencia_parada_<stop>_proxima_llegada` (the actual slug is
-  assigned by Home Assistant): earliest minute-based prediction.
-- `arrivals` attribute: complete list returned by EMT, including `linea`,
-  `destino`, and either `minutos`, `horaLlegada`, or an EMT `error`.
-- Refresh: every minute, coordinated so future entities share one API call.
+- One sensor per selected `device_tracker`, containing structured `nearby_stops`
+  ordered by distance, each with lines, destinations and arrivals.
+- One sensor per optional favourite stop, with its structured `arrivals`.
+- Shared live-arrival calls: a stop found for multiple mobiles or also marked as
+  favourite is queried only once per refresh.
+- GPS stop search only repeats after the configured movement threshold; arrivals
+  refresh at the configured interval (60 seconds by default).
 
-The configuration flow defaults to stop **1622**, which was used as the live
-smoke-test stop during development.
+There is no mandatory stop. Existing 0.1 entries preserve their old stop as an
+editable favourite, so the test stop **1622** can simply be removed in Options.
 
 ## Install with HACS
 
@@ -27,8 +29,8 @@ smoke-test stop during development.
    València**.
 4. Restart Home Assistant.
 5. Go to **Settings → Devices & services → Add integration**, search for
-   **EMT València**, and enter the stop number (use `1622` for the initial
-   test).
+   **EMT València**. Pick any `device_tracker` entities you want to use and/or
+   enter favourites as `1585:Casa, 1622:Trabajo`.
 
 HACS only installs the integration. On first setup Home Assistant installs the
 declared Python dependency `emtvlcapi==1.0.0` automatically.
@@ -39,9 +41,9 @@ Open **Developer tools → States**, find the new EMT sensor, and confirm that:
 
 - Its state is a minute count for the next arriving bus (or `unknown` if EMT
   currently returns only clock-time/error records).
-- The `arrivals` attribute contains live data for the chosen stop.
-- Updating the entity after a minute changes the data when EMT publishes a new
-  estimate.
+- A tracker sensor's `nearby_stops` lists stop IDs, distance, lines and arrivals.
+- A favourite sensor's `arrivals` contains its live services.
+- Use the entity's standard **Update** action to request a manual refresh.
 
 If setup fails, enable debug logging for the `emt_valencia` integration and
 check the Home Assistant log. The integration leaves all other Home Assistant
@@ -52,10 +54,8 @@ configuration untouched.
 The coordinator is deliberately separated from the sensor so future work can
 add, without an external service:
 
-1. stop discovery using `emtvlcapi.get_stops_in_extent`;
-2. nearest-stop selection from a configured `device_tracker`;
-3. per-line arrival entities and a Lovelace card built on the `arrivals`
-   attribute.
+1. a dashboard card using the stable aggregate attributes;
+2. optional automatic presentation based on presence at home.
 
 ## Upstream dependency
 
