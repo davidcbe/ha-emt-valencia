@@ -19,9 +19,10 @@ ATTRIBUTION = "Data provided by EMT València"
 async def async_setup_entry(hass: HomeAssistant, entry: EMTValenciaConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Create a bounded number of stable aggregate entities."""
     coordinator = entry.runtime_data
-    entities: list[SensorEntity] = [
+    entities: list[SensorEntity] = [EMTFavoriteStopsSensor(coordinator)]
+    entities.extend(
         EMTTrackerSensor(coordinator, tracker) for tracker in coordinator.tracker_keys
-    ]
+    )
     entities.extend(EMTFavoriteSensor(coordinator, item["stop_id"]) for item in coordinator.config["favorite_stops"])
     async_add_entities(entities)
 
@@ -63,6 +64,59 @@ class EMTTrackerSensor(_BaseSensor):
                 ATTR_LOCATION: data.get("location"), "location_last_updated": data.get("location_last_updated"),
                 ATTR_NEARBY_STOPS: data.get("nearby_stops", []), ATTR_LAST_SUCCESS: self.coordinator.data.get("last_successful_update"),
                 "error": data.get("error")}
+
+
+class EMTFavoriteStopsSensor(_BaseSensor):
+    """Stable aggregate of every configured favourite stop."""
+
+    # Keep the requested entity ID stable: sensor.emt_valencia_paradas_favoritas.
+    _attr_has_entity_name = False
+    _attr_name = "EMT València Paradas favoritas"
+    _attr_icon = "mdi:bus-multiple"
+    _attr_device_class = None
+    _attr_native_unit_of_measurement = None
+
+    def __init__(self, coordinator: EMTValenciaDataUpdateCoordinator) -> None:
+        """Initialise the aggregate independently of the configured stops."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{DOMAIN}_favorite_stops"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, "favorite_stops")},
+            "name": "EMT València · favoritas",
+            "manufacturer": "EMT València",
+            "model": "Favourite stops aggregate",
+        }
+
+    @property
+    def _data(self) -> dict[str, dict[str, Any]]:
+        return self.coordinator.data.get("favorites", {})
+
+    @property
+    def native_value(self) -> int:
+        return len(self._data)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        stops: list[dict[str, Any]] = []
+        for stop in self._data.values():
+            item = {
+                "stop_id": stop["stop_id"],
+                "name": stop.get("name"),
+                ATTR_ARRIVALS: stop.get(ATTR_ARRIVALS, []),
+                "next_minutes": stop.get("next_minutes"),
+            }
+            if stop.get("official_name"):
+                item["official_name"] = stop["official_name"]
+            if stop.get("custom_name"):
+                item["custom_name"] = stop["custom_name"]
+            if stop.get("error"):
+                item["error"] = stop["error"]
+            stops.append(item)
+        return {
+            ATTR_ATTRIBUTION: ATTRIBUTION,
+            "favorite_stops": stops,
+            ATTR_LAST_SUCCESS: self.coordinator.data.get("last_successful_update"),
+        }
 
 
 class EMTFavoriteSensor(_BaseSensor):

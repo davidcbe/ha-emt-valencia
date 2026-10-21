@@ -5,13 +5,16 @@ It fetches the real-time arrivals for one or more EMT València stops directly
 from Home Assistant; it does not require an LXC, HTTP service, token, or YAML
 configuration.
 
-## Current scope (0.2.2)
+## Current scope (0.3.0)
 
 Each config entry can create bounded aggregate sensors (no dynamic entity flood):
 
 - One sensor per selected Home Assistant Companion device, containing structured `nearby_stops`
   ordered by distance, each with lines, destinations and arrivals.
 - One sensor per optional favourite stop, with its structured `arrivals`.
+- A permanent `sensor.emt_valencia_paradas_favoritas` aggregate: its state is
+  the number of configured favourites and its `favorite_stops` attribute holds
+  every stop, arrival list and next numeric arrival for one dynamic dashboard card.
 - Shared live-arrival calls: a stop found for multiple mobiles or also marked as
   favourite is queried only once per refresh.
 - GPS stop search only repeats after the configured movement threshold; arrivals

@@ -126,7 +126,9 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 continue
             if distance <= radius and row.get("stopId"):
                 routes = row.get("routes", [])
-                stops.append({"stop_id": str(row["stopId"]), "name": row.get("name") or row.get("ubica") or "Parada EMT",
+                official_name = row.get("name") or row.get("ubica") or "Parada EMT"
+                stops.append({"stop_id": str(row["stopId"]), "name": official_name,
+                    "official_name": official_name,
                     "distance_m": distance, "latitude": lat, "longitude": lon,
                     "lines": [{"line": r.get("SN") or r.get("lineaNumber") or r.get("id_linea"),
                                "destination": r.get("headSign") or r.get("LN") or r.get("lineaName")} for r in routes]})
@@ -177,7 +179,16 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         for favorite in self.config[CONF_FAVORITE_STOPS]:
             stop_id = str(favorite["stop_id"])
             stop = dict(unique.get(stop_id, {}))
-            stop.update({"stop_id": stop_id, "name": favorite.get("name") or stop.get("name") or f"Parada {stop_id}"})
+            custom_name = str(favorite.get("name") or "").strip()
+            official_name = stop.get("official_name") or stop.get("name")
+            name = (
+                f"{custom_name} · {official_name}"
+                if custom_name and official_name and custom_name != official_name
+                else custom_name or official_name or f"Parada {stop_id}"
+            )
+            stop.update({"stop_id": stop_id, "name": name,
+                         "custom_name": custom_name or None,
+                         "official_name": official_name})
             favorites[stop_id] = unique[stop_id] = stop
         results = await asyncio.gather(*(self._arrivals(stop_id) for stop_id in unique))
         arrival_map = dict(zip(unique, results, strict=True))
