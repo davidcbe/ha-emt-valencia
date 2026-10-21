@@ -1,5 +1,4 @@
-"""Sensor platform for EMT València."""
-
+"""Aggregate sensors for selected GPS trackers and favourite EMT stops."""
 from __future__ import annotations
 
 from typing import Any
@@ -10,62 +9,82 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTR_ARRIVALS, ATTR_STOP_ID, CONF_STOP_ID, DOMAIN
-from .coordinator import EMTValenciaDataUpdateCoordinator
 from . import EMTValenciaConfigEntry
+from .const import ATTR_ARRIVALS, ATTR_DISTANCE, ATTR_LAST_SUCCESS, ATTR_LOCATION, ATTR_NEARBY_STOPS, ATTR_STOP_ID, DOMAIN
+from .coordinator import EMTValenciaDataUpdateCoordinator
 
 ATTRIBUTION = "Data provided by EMT València"
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: EMTValenciaConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up the arrivals sensor for an EMT stop."""
-    async_add_entities([EMTValenciaArrivalsSensor(entry.runtime_data, entry)])
+async def async_setup_entry(hass: HomeAssistant, entry: EMTValenciaConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    """Create a bounded number of stable aggregate entities."""
+    coordinator = entry.runtime_data
+    entities: list[SensorEntity] = [
+        EMTTrackerSensor(coordinator, tracker) for tracker in coordinator.config["device_trackers"]
+    ]
+    entities.extend(EMTFavoriteSensor(coordinator, item["stop_id"]) for item in coordinator.config["favorite_stops"])
+    async_add_entities(entities)
 
 
-class EMTValenciaArrivalsSensor(
-    CoordinatorEntity[EMTValenciaDataUpdateCoordinator], SensorEntity
-):
-    """Represent the soonest live arrival for a configured stop."""
-
+class _BaseSensor(CoordinatorEntity[EMTValenciaDataUpdateCoordinator], SensorEntity):
     _attr_has_entity_name = True
-    _attr_name = "Próxima llegada"
     _attr_icon = "mdi:bus-clock"
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = "min"
 
-    def __init__(
-        self, coordinator: EMTValenciaDataUpdateCoordinator, entry: EMTValenciaConfigEntry
-    ) -> None:
-        """Initialize the sensor."""
+    async def async_update(self) -> None:
+        """Support the standard Home Assistant manual Update action."""
+        await self.coordinator.async_request_refresh()
+
+
+class EMTTrackerSensor(_BaseSensor):
+    _attr_name = "Paradas cercanas"
+
+    def __init__(self, coordinator: EMTValenciaDataUpdateCoordinator, tracker_id: str) -> None:
         super().__init__(coordinator)
-        self._stop_id = entry.data[CONF_STOP_ID]
-        self._attr_unique_id = f"{DOMAIN}_{self._stop_id}_next_arrival"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, self._stop_id)},
-            "name": f"EMT València · parada {self._stop_id}",
-            "manufacturer": "EMT València",
-            "model": "Live arrivals",
-        }
+        self._tracker_id = tracker_id
+        self._attr_unique_id = f"{DOMAIN}_tracker_{tracker_id}"
+        self._attr_device_info = {"identifiers": {(DOMAIN, f"tracker_{tracker_id}")}, "name": f"EMT València · {tracker_id}", "manufacturer": "EMT València", "model": "Nearby stops"}
+
+    @property
+    def _data(self) -> dict[str, Any]:
+        return self.coordinator.data.get("trackers", {}).get(self._tracker_id, {})
 
     @property
     def native_value(self) -> int | None:
-        """Return the earliest valid minute-based prediction."""
-        minutes = [
-            arrival["minutos"]
-            for arrival in self.coordinator.data
-            if isinstance(arrival.get("minutos"), int)
-        ]
-        return min(minutes) if minutes else None
+        values = [stop.get("next_minutes") for stop in self._data.get("nearby_stops", []) if isinstance(stop.get("next_minutes"), int)]
+        return min(values) if values else None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return all raw, display-ready arrivals from EMT."""
-        return {
-            ATTR_ATTRIBUTION: ATTRIBUTION,
-            ATTR_STOP_ID: self._stop_id,
-            ATTR_ARRIVALS: self.coordinator.data,
-        }
+        data = self._data
+        return {ATTR_ATTRIBUTION: ATTRIBUTION, "device_tracker": self._tracker_id,
+                ATTR_LOCATION: data.get("location"), "location_last_updated": data.get("location_last_updated"),
+                ATTR_NEARBY_STOPS: data.get("nearby_stops", []), ATTR_LAST_SUCCESS: self.coordinator.data.get("last_successful_update"),
+                "error": data.get("error")}
+
+
+class EMTFavoriteSensor(_BaseSensor):
+    _attr_name = "Llegadas"
+
+    def __init__(self, coordinator: EMTValenciaDataUpdateCoordinator, stop_id: str) -> None:
+        super().__init__(coordinator)
+        self._stop_id = str(stop_id)
+        self._attr_unique_id = f"{DOMAIN}_favorite_{self._stop_id}"
+        self._attr_device_info = {"identifiers": {(DOMAIN, f"favorite_{self._stop_id}")}, "name": f"EMT València · favorita {self._stop_id}", "manufacturer": "EMT València", "model": "Favourite stop"}
+
+    @property
+    def _data(self) -> dict[str, Any]:
+        return self.coordinator.data.get("favorites", {}).get(self._stop_id, {})
+
+    @property
+    def native_value(self) -> int | None:
+        value = self._data.get("next_minutes")
+        return value if isinstance(value, int) else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        data = self._data
+        return {ATTR_ATTRIBUTION: ATTRIBUTION, ATTR_STOP_ID: self._stop_id, "name": data.get("name"),
+                ATTR_DISTANCE: data.get("distance_m"), "lines": data.get("lines", []), ATTR_ARRIVALS: data.get("arrivals", []),
+                ATTR_LAST_SUCCESS: self.coordinator.data.get("last_successful_update"), "error": data.get("error")}
