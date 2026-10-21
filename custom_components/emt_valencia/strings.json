@@ -3,17 +3,50 @@
     "step": {
       "user": {
         "title": "EMT València",
-        "description": "Introduce el número de parada de EMT València.",
+        "description": "Selecciona móviles opcionales y/o paradas favoritas. Las favoritas se escriben como 1585:Casa, 1622:Trabajo.",
         "data": {
-          "stop_id": "Número de parada"
+          "device_trackers": "Dispositivos con ubicación",
+          "favorite_stops": "Paradas favoritas",
+          "search_radius": "Radio de búsqueda",
+          "max_nearby_stops": "Máximo de paradas cercanas",
+          "scan_interval": "Intervalo de actualización",
+          "movement_threshold": "Desplazamiento para recalcular"
+        }
+      },
+      "init": {
+        "title": "EMT València",
+        "description": "Selecciona móviles opcionales y/o paradas favoritas. Las favoritas se escriben como 1585:Casa, 1622:Trabajo.",
+        "data": {
+          "device_trackers": "Dispositivos con ubicación",
+          "favorite_stops": "Paradas favoritas",
+          "search_radius": "Radio de búsqueda",
+          "max_nearby_stops": "Máximo de paradas cercanas",
+          "scan_interval": "Intervalo de actualización",
+          "movement_threshold": "Desplazamiento para recalcular"
         }
       }
     },
     "error": {
-      "invalid_stop_id": "El número de parada solo puede contener dígitos."
+      "invalid_favorites": "Cada parada debe ser un número; opcionalmente añade :Nombre."
     },
     "abort": {
       "already_configured": "Esta parada ya está configurada."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "EMT València",
+        "description": "Selecciona móviles opcionales y/o paradas favoritas. Las favoritas se escriben como 1585:Casa, 1622:Trabajo.",
+        "data": {
+          "device_trackers": "Dispositivos con ubicación",
+          "favorite_stops": "Paradas favoritas",
+          "search_radius": "Radio de búsqueda",
+          "max_nearby_stops": "Máximo de paradas cercanas",
+          "scan_interval": "Intervalo de actualización",
+          "movement_threshold": "Desplazamiento para recalcular"
+        }
+      }
     }
   }
 }
