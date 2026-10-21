@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .const import CONF_FAVORITE_STOPS, CONF_STOP_ID, DOMAIN
 from .coordinator import EMTValenciaDataUpdateCoordinator
@@ -28,6 +29,24 @@ async def async_unload_entry(hass: HomeAssistant, entry: EMTValenciaConfigEntry)
     """Unload an EMT València config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     return unload_ok
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: object
+) -> bool:
+    """Allow Home Assistant to remove only EMT devices that have no entities.
+
+    This clears device-registry leftovers after a tracker or favourite is
+    removed in the Options flow, while protecting every active EMT device.
+    """
+    device_id = getattr(device_entry, "id", None)
+    if not device_id:
+        return False
+    registry = er.async_get(hass)
+    return not any(
+        entity.config_entry_id == config_entry.entry_id
+        for entity in er.async_entries_for_device(registry, device_id)
+    )
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: EMTValenciaConfigEntry) -> None:

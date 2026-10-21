@@ -5,7 +5,7 @@ It fetches the real-time arrivals for one or more EMT València stops directly
 from Home Assistant; it does not require an LXC, HTTP service, token, or YAML
 configuration.
 
-## Current scope (0.2.1)
+## Current scope (0.2.2)
 
 Each config entry can create bounded aggregate sensors (no dynamic entity flood):
 
@@ -16,6 +16,8 @@ Each config entry can create bounded aggregate sensors (no dynamic entity flood)
   favourite is queried only once per refresh.
 - GPS stop search only repeats after the configured movement threshold; arrivals
   refresh at the configured interval (60 seconds by default).
+- Devices left without entities after a configuration change can be removed from
+  Home Assistant's device registry.
 
 There is no mandatory stop. Existing 0.1 entries preserve their old stop as an
 editable favourite, so the test stop **1622** can simply be removed in Options.
