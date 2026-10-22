@@ -32,6 +32,19 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 _TZ = ZoneInfo("Europe/Madrid")
 _BUS_TIMES_URL = "https://www.emtvalencia.es/EMT/mapfunctions/MapUtilsPetitions.php?sec=getSAE"
+# EMT rejects the arrival endpoint when it is called without the same browser
+# headers used by emtvlcapi.  Keep this explicit rather than relying on that
+# library's non-public module variable: this integration owns the small XML
+# parser needed for clock-time rows in ``minutos``.
+_EMT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101 Firefox/98.0",
+    "Accept": "*/*",
+    "Accept-Language": "es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3",
+    "Referer": "https://www.emtvalencia.es",
+    "Connection": "keep-alive",
+    "Pragma": "no-cache",
+    "Cache-Control": "no-cache",
+}
 # Conservative city envelope: no nearby-stop request outside it.
 _CATALOG_BOUNDS = (39.35, -0.50, 39.55, -0.20)
 _CLOCK = re.compile(r"^(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$")
@@ -205,7 +218,11 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         for attempt in range(2):
             try:
                 async with asyncio.timeout(REQUEST_TIMEOUT):
-                    async with async_get_clientsession(self.hass).get(_BUS_TIMES_URL, params={"parada": stop_id, "adaptados": "false"}) as response:
+                    async with async_get_clientsession(self.hass).get(
+                        _BUS_TIMES_URL,
+                        params={"parada": stop_id, "adaptados": "false"},
+                        headers=_EMT_HEADERS,
+                    ) as response:
                         if response.status != 200:
                             raise RuntimeError(f"EMT HTTP {response.status}")
                         return self._parse_arrivals(await response.text())
@@ -246,6 +263,12 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             else:
                 item.update({"error": "No valid time data", "time_type": "error"})
             arrivals.append(item)
+        valid_arrivals = [item for item in arrivals if item.get("time_type") in {"estimated", "scheduled"}]
+        # EMT uses a 200 response for its own temporary-error page.  A parsed
+        # XML document alone is therefore not a successful update.
+        if arrivals and not valid_arrivals:
+            errors = [str(item.get("error")) for item in arrivals if item.get("error")]
+            raise RuntimeError(errors[0] if errors else "EMT returned no usable arrivals")
         arrivals.sort(key=lambda item: (0, item["minutes"]) if isinstance(item.get("minutes"), int) else ((0, item["scheduled_arrival"]) if item.get("scheduled_arrival") else (1, "")))
         minutes = [item["minutes"] for item in arrivals if isinstance(item.get("minutes"), int)]
         return {"arrivals": arrivals, "next_minutes": min(minutes) if minutes else None, "last_successful_update": observed_at, "stale": False}

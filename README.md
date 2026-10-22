@@ -4,6 +4,11 @@ Custom HACS integration for EMT València. It finds stops near selected Home
 Assistant Companion devices, monitors favourite stops and exposes arrivals
 without an external service, token, YAML configuration or LXC.
 
+Version 0.4.1 restores the upstream EMT request headers for arrivals.  EMT
+returns a HTTP 200 XML error page when those headers are absent; an all-error
+response is now treated as a failed refresh and cannot advance
+`last_successful_update`.
+
 ## Installation and update
 
 In **HACS → Integrations → ⋮ → Custom repositories**, add
