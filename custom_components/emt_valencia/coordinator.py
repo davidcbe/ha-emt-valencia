@@ -306,6 +306,12 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     refresh_stops.update(item["stop_id"] for item in cached)
                 for stop in cached:
                     stop_index[stop["stop_id"]] = stop
+                    # A stop that was discovered while EMT was unavailable has
+                    # no arrival-cache entry.  Do not make it wait for the
+                    # next GPS/nearby scan: favourites have their own schedule
+                    # and would otherwise be the only nearby stops refreshed.
+                    if stop["stop_id"] not in self._arrival_cache:
+                        refresh_stops.add(stop["stop_id"])
             trackers[key] = tracker
         favorite_defs = self.config[CONF_FAVORITE_STOPS]
         if can_request and any(str(item["stop_id"]) not in self._catalog and str(item["stop_id"]) not in stop_index for item in favorite_defs):
