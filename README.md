@@ -4,8 +4,10 @@ Custom HACS integration for EMT València. It finds stops near selected Home
 Assistant Companion devices, monitors favourite stops and exposes arrivals
 without an external service, token, YAML configuration or LXC.
 
-Version 0.4.2 retries a nearby stop that has no successful arrival snapshot
-yet, independently of the favourite-stop schedule. Version 0.4.1 restores
+Version 0.5.0 replaces the encoded favourite-stop text field with a searchable
+picker and a separate optional alias. Version 0.4.2 retries a nearby stop that
+has no successful arrival snapshot yet, independently of the favourite-stop
+schedule. Version 0.4.1 restores
 the upstream EMT request headers for arrivals. EMT
 returns a HTTP 200 XML error page when those headers are absent; an all-error
 response is now treated as a failed refresh and cannot advance
@@ -20,17 +22,11 @@ Devices & services**. Existing configuration and entity IDs are retained.
 
 ## Configuration
 
-Select one or more devices registered through **Home Assistant Companion**.
-The integration selects each Companion GPS tracker automatically. Set the
-search radius (100–2000 m), nearby-stop limit (1–10), and favourites:
-
-```text
-1585:Casa, 1616:Trabajo, 1622
-```
-
-Text after `:` is an optional alias and can be changed or removed from the
-integration options. Each favourite retains EMT ID, official name, alias,
-coordinates and arrivals.
+Selecciona uno o más dispositivos registrados mediante **Home Assistant
+Companion**. La integración elige automáticamente el rastreador GPS adecuado.
+Las favoritas se gestionan desde **Configurar → Gestionar paradas favoritas**:
+busca la parada por nombre, selecciónala y escribe el alias opcional en su
+propio campo. No tienes que conocer ni escribir la sintaxis de los IDs.
 
 ## Refresh behaviour
 

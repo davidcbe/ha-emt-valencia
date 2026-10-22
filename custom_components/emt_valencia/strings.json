@@ -1,58 +1,12 @@
 {
-  "config": {
-    "step": {
-      "user": {
-        "title": "EMT València",
-        "description": "Selecciona dispositivos de la app Home Assistant Companion y/o paradas favoritas. Se usa automáticamente su rastreador GPS, sin elegir entre duplicados.",
-        "data": {
-          "mobile_devices": "Dispositivos con Home Assistant Companion",
-          "favorite_stops": "Paradas favoritas",
-          "search_radius": "Radio de búsqueda",
-          "max_nearby_stops": "Máximo de paradas cercanas",
-          "home_scan_interval": "Intervalo en casa",
-          "away_scan_interval": "Intervalo fuera de casa",
-          "favorites_scan_interval": "Intervalo de favoritas",
-          "movement_threshold": "Desplazamiento para recalcular"
-        }
-      },
-      "init": {
-        "title": "EMT València",
-        "description": "Selecciona dispositivos de la app Home Assistant Companion y/o paradas favoritas. Se usa automáticamente su rastreador GPS, sin elegir entre duplicados.",
-        "data": {
-          "mobile_devices": "Dispositivos con Home Assistant Companion",
-          "favorite_stops": "Paradas favoritas",
-          "search_radius": "Radio de búsqueda",
-          "max_nearby_stops": "Máximo de paradas cercanas",
-          "home_scan_interval": "Intervalo en casa",
-          "away_scan_interval": "Intervalo fuera de casa",
-          "favorites_scan_interval": "Intervalo de favoritas",
-          "movement_threshold": "Desplazamiento para recalcular"
-        }
-      }
-    },
-    "error": {
-      "invalid_favorites": "Cada parada debe ser un número; opcionalmente añade :Nombre."
-    },
-    "abort": {
-      "already_configured": "Esta parada ya está configurada."
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "EMT València",
-        "description": "Selecciona dispositivos de la app Home Assistant Companion y/o paradas favoritas. Se usa automáticamente su rastreador GPS, sin elegir entre duplicados.",
-        "data": {
-          "mobile_devices": "Dispositivos con Home Assistant Companion",
-          "favorite_stops": "Paradas favoritas",
-          "search_radius": "Radio de búsqueda",
-          "max_nearby_stops": "Máximo de paradas cercanas",
-          "home_scan_interval": "Intervalo en casa",
-          "away_scan_interval": "Intervalo fuera de casa",
-          "favorites_scan_interval": "Intervalo de favoritas",
-          "movement_threshold": "Desplazamiento para recalcular"
-        }
-      }
-    }
-  }
+  "config": {"step": {"user": {"title": "EMT València", "description": "Selecciona los dispositivos con Home Assistant Companion. Las favoritas se gestionan después desde Configurar, con búsqueda y alias independientes.", "data": {"mobile_devices": "Dispositivos con Home Assistant Companion", "search_radius": "Radio de búsqueda", "max_nearby_stops": "Máximo de paradas cercanas", "home_scan_interval": "Intervalo en casa", "away_scan_interval": "Intervalo fuera de casa", "favorites_scan_interval": "Intervalo de favoritas", "movement_threshold": "Desplazamiento para recalcular"}}}},
+  "options": {"step": {
+    "init": {"title": "EMT València", "description": "Elige qué quieres gestionar.", "menu_options": {"general": "Configuración general", "favorites": "Gestionar paradas favoritas", "finish": "Guardar cambios"}},
+    "general": {"title": "Configuración general", "data": {"mobile_devices": "Dispositivos con Home Assistant Companion", "search_radius": "Radio de búsqueda", "max_nearby_stops": "Máximo de paradas cercanas", "home_scan_interval": "Intervalo en casa", "away_scan_interval": "Intervalo fuera de casa", "favorites_scan_interval": "Intervalo de favoritas", "movement_threshold": "Desplazamiento para recalcular"}},
+    "favorites": {"title": "Paradas favoritas", "description": "Las favoritas actuales se conservan hasta que guardes los cambios.", "menu_options": {"add_favorite": "Añadir favorita", "edit_favorite": "Cambiar alias", "remove_favorite": "Eliminar favorita", "finish": "Guardar cambios"}},
+    "add_favorite": {"title": "Añadir parada favorita", "description": "Busca la parada por su nombre. El alias es opcional y se muestra junto al nombre oficial.", "data": {"favorite_stop": "Parada", "favorite_alias": "Alias (opcional)"}},
+    "edit_favorite": {"title": "Elegir favorita", "data": {"favorite_stop": "Parada"}},
+    "edit_alias": {"title": "Cambiar alias", "data": {"favorite_alias": "Alias (opcional)"}},
+    "remove_favorite": {"title": "Eliminar favorita", "data": {"favorite_stop": "Parada"}}
+  }, "error": {"already_favorite": "Esa parada ya está entre tus favoritas.", "catalog_unavailable": "No se ha podido obtener el catálogo de paradas. Inténtalo de nuevo."}}
 }

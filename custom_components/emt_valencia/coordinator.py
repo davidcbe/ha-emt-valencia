@@ -193,6 +193,11 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except Exception as err:
             _LOGGER.warning("Could not load EMT stop catalogue: %s", err)
 
+    async def async_get_stop_catalog(self) -> list[dict[str, Any]]:
+        """Return the shared stop catalogue for the Options flow selector."""
+        await self._ensure_catalog()
+        return [dict(item) for item in self._catalog.values()]
+
     async def _arrivals(self, stop_id: str) -> dict[str, Any]:
         if task := self._arrival_tasks.get(stop_id):
             return await task
