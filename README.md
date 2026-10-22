@@ -4,8 +4,9 @@ Custom HACS integration for EMT València. It finds stops near selected Home
 Assistant Companion devices, monitors favourite stops and exposes arrivals
 without an external service, token, YAML configuration or LXC.
 
-Version 0.5.0 replaces the encoded favourite-stop text field with a searchable
-picker and a separate optional alias. Version 0.4.2 retries a nearby stop that
+Version 0.5.1 fixes mixed minute/clock-time arrival responses. Version 0.5.0
+replaces the encoded favourite-stop text field with a searchable picker and a
+separate optional alias. Version 0.4.2 retries a nearby stop that
 has no successful arrival snapshot yet, independently of the favourite-stop
 schedule. Version 0.4.1 restores
 the upstream EMT request headers for arrivals. EMT

@@ -274,7 +274,16 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if arrivals and not valid_arrivals:
             errors = [str(item.get("error")) for item in arrivals if item.get("error")]
             raise RuntimeError(errors[0] if errors else "EMT returned no usable arrivals")
-        arrivals.sort(key=lambda item: (0, item["minutes"]) if isinstance(item.get("minutes"), int) else ((0, item["scheduled_arrival"]) if item.get("scheduled_arrival") else (1, "")))
+        # Keep the comparison keys type-safe: EMT can mix a numeric estimate
+        # (``5 min.``) with a clock-time row (``19:05:00``) in one response.
+        # The former must never be compared directly with the latter.
+        arrivals.sort(key=lambda item: (
+            0, item["minutes"], ""
+        ) if isinstance(item.get("minutes"), int) else (
+            1, 0, item["scheduled_arrival"]
+        ) if item.get("scheduled_arrival") else (
+            2, 0, ""
+        ))
         minutes = [item["minutes"] for item in arrivals if isinstance(item.get("minutes"), int)]
         return {"arrivals": arrivals, "next_minutes": min(minutes) if minutes else None, "last_successful_update": observed_at, "stale": False}
 
