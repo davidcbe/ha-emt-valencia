@@ -10,7 +10,7 @@ from homeassistant.helpers import entity_registry as er
 from .const import CONF_FAVORITE_STOPS, CONF_STOP_ID, DOMAIN
 from .coordinator import EMTValenciaDataUpdateCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
 EMTValenciaConfigEntry = ConfigEntry[EMTValenciaDataUpdateCoordinator]
 
 
@@ -55,10 +55,12 @@ async def _async_update_listener(hass: HomeAssistant, entry: EMTValenciaConfigEn
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Preserve a 0.1 fixed stop as an editable 0.2 favourite."""
+    """Preserve all old config entries; v0.4 only adds option defaults."""
     if entry.version == 1:
         data = dict(entry.data)
         if CONF_STOP_ID in data:
             data[CONF_FAVORITE_STOPS] = [{"stop_id": str(data[CONF_STOP_ID]), "name": ""}]
         hass.config_entries.async_update_entry(entry, data=data, version=2)
+    if entry.version == 2:
+        hass.config_entries.async_update_entry(entry, version=3)
     return True

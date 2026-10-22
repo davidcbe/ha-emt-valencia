@@ -9,7 +9,9 @@
           "favorite_stops": "Paradas favoritas",
           "search_radius": "Radio de búsqueda",
           "max_nearby_stops": "Máximo de paradas cercanas",
-          "scan_interval": "Intervalo de actualización",
+          "home_scan_interval": "Intervalo en casa",
+          "away_scan_interval": "Intervalo fuera de casa",
+          "favorites_scan_interval": "Intervalo de favoritas",
           "movement_threshold": "Desplazamiento para recalcular"
         }
       },
@@ -21,7 +23,9 @@
           "favorite_stops": "Paradas favoritas",
           "search_radius": "Radio de búsqueda",
           "max_nearby_stops": "Máximo de paradas cercanas",
-          "scan_interval": "Intervalo de actualización",
+          "home_scan_interval": "Intervalo en casa",
+          "away_scan_interval": "Intervalo fuera de casa",
+          "favorites_scan_interval": "Intervalo de favoritas",
           "movement_threshold": "Desplazamiento para recalcular"
         }
       }
@@ -43,7 +47,9 @@
           "favorite_stops": "Paradas favoritas",
           "search_radius": "Radio de búsqueda",
           "max_nearby_stops": "Máximo de paradas cercanas",
-          "scan_interval": "Intervalo de actualización",
+          "home_scan_interval": "Intervalo en casa",
+          "away_scan_interval": "Intervalo fuera de casa",
+          "favorites_scan_interval": "Intervalo de favoritas",
           "movement_threshold": "Desplazamiento para recalcular"
         }
       }

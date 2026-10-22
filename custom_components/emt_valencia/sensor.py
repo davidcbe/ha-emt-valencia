@@ -104,6 +104,8 @@ class EMTFavoriteStopsSensor(_BaseSensor):
                 "name": stop.get("name"),
                 ATTR_ARRIVALS: stop.get(ATTR_ARRIVALS, []),
                 "next_minutes": stop.get("next_minutes"),
+                "latitude": stop.get("latitude"),
+                "longitude": stop.get("longitude"),
             }
             if stop.get("official_name"):
                 item["official_name"] = stop["official_name"]
@@ -141,5 +143,7 @@ class EMTFavoriteSensor(_BaseSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         data = self._data
         return {ATTR_ATTRIBUTION: ATTRIBUTION, ATTR_STOP_ID: self._stop_id, "name": data.get("name"),
+                "official_name": data.get("official_name"), "custom_name": data.get("custom_name"),
+                "latitude": data.get("latitude"), "longitude": data.get("longitude"),
                 ATTR_DISTANCE: data.get("distance_m"), "lines": data.get("lines", []), ATTR_ARRIVALS: data.get("arrivals", []),
                 ATTR_LAST_SUCCESS: self.coordinator.data.get("last_successful_update"), "error": data.get("error")}

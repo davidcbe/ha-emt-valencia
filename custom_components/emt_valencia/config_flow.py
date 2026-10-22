@@ -12,9 +12,11 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
 
 from .const import (
-    CONF_FAVORITE_STOPS, CONF_MAX_NEARBY_STOPS, CONF_MOBILE_DEVICES,
+    CONF_AWAY_SCAN_INTERVAL, CONF_FAVORITE_STOPS, CONF_FAVORITES_SCAN_INTERVAL,
+    CONF_HOME_SCAN_INTERVAL, CONF_MAX_NEARBY_STOPS, CONF_MOBILE_DEVICES,
     CONF_MOVEMENT_THRESHOLD, CONF_SCAN_INTERVAL, CONF_SEARCH_RADIUS,
-    DEFAULT_MAX_NEARBY_STOPS, DEFAULT_MOVEMENT_THRESHOLD,
+    DEFAULT_AWAY_SCAN_INTERVAL, DEFAULT_FAVORITES_SCAN_INTERVAL,
+    DEFAULT_HOME_SCAN_INTERVAL, DEFAULT_MAX_NEARBY_STOPS, DEFAULT_MOVEMENT_THRESHOLD,
     DEFAULT_SEARCH_RADIUS, DOMAIN, MAX_SCAN_INTERVAL, MIN_SCAN_INTERVAL,
 )
 
@@ -53,7 +55,11 @@ def _schema(defaults: Mapping[str, Any]) -> vol.Schema:
             selector.NumberSelector(selector.NumberSelectorConfig(min=100, max=2000, step=50, unit_of_measurement="m")),
         vol.Optional(CONF_MAX_NEARBY_STOPS, default=defaults.get(CONF_MAX_NEARBY_STOPS, DEFAULT_MAX_NEARBY_STOPS)):
             selector.NumberSelector(selector.NumberSelectorConfig(min=1, max=10, step=1)),
-        vol.Optional(CONF_SCAN_INTERVAL, default=defaults.get(CONF_SCAN_INTERVAL, MIN_SCAN_INTERVAL)):
+        vol.Optional(CONF_HOME_SCAN_INTERVAL, default=defaults.get(CONF_HOME_SCAN_INTERVAL, DEFAULT_HOME_SCAN_INTERVAL)):
+            selector.NumberSelector(selector.NumberSelectorConfig(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL, step=30, unit_of_measurement="s")),
+        vol.Optional(CONF_AWAY_SCAN_INTERVAL, default=defaults.get(CONF_AWAY_SCAN_INTERVAL, defaults.get(CONF_SCAN_INTERVAL, DEFAULT_AWAY_SCAN_INTERVAL))):
+            selector.NumberSelector(selector.NumberSelectorConfig(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL, step=30, unit_of_measurement="s")),
+        vol.Optional(CONF_FAVORITES_SCAN_INTERVAL, default=defaults.get(CONF_FAVORITES_SCAN_INTERVAL, DEFAULT_FAVORITES_SCAN_INTERVAL)):
             selector.NumberSelector(selector.NumberSelectorConfig(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL, step=30, unit_of_measurement="s")),
         vol.Optional(CONF_MOVEMENT_THRESHOLD, default=defaults.get(CONF_MOVEMENT_THRESHOLD, DEFAULT_MOVEMENT_THRESHOLD)):
             selector.NumberSelector(selector.NumberSelectorConfig(min=25, max=1000, step=25, unit_of_measurement="m")),
@@ -66,13 +72,17 @@ def _normalize(user_input: Mapping[str, Any]) -> dict[str, Any]:
         CONF_FAVORITE_STOPS: _parse_favorites(str(user_input.get(CONF_FAVORITE_STOPS, ""))),
         CONF_SEARCH_RADIUS: int(user_input[CONF_SEARCH_RADIUS]),
         CONF_MAX_NEARBY_STOPS: int(user_input[CONF_MAX_NEARBY_STOPS]),
-        CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
+        # Keep the legacy key for a lossless downgrade/read of older entries.
+        CONF_SCAN_INTERVAL: int(user_input[CONF_AWAY_SCAN_INTERVAL]),
+        CONF_HOME_SCAN_INTERVAL: int(user_input[CONF_HOME_SCAN_INTERVAL]),
+        CONF_AWAY_SCAN_INTERVAL: int(user_input[CONF_AWAY_SCAN_INTERVAL]),
+        CONF_FAVORITES_SCAN_INTERVAL: int(user_input[CONF_FAVORITES_SCAN_INTERVAL]),
         CONF_MOVEMENT_THRESHOLD: int(user_input[CONF_MOVEMENT_THRESHOLD]),
     }
 
 
 class EMTValenciaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 3
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         errors: dict[str, str] = {}
