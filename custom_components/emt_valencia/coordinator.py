@@ -28,6 +28,7 @@ from .const import (
     DEFAULT_HOME_SCAN_INTERVAL, DEFAULT_MAX_NEARBY_STOPS, DEFAULT_MOVEMENT_THRESHOLD,
     DEFAULT_SCAN_INTERVAL, DEFAULT_SEARCH_RADIUS, DOMAIN, MAX_BACKOFF, REQUEST_TIMEOUT,
 )
+from .arrival_utils import arrival_sort_key
 
 _LOGGER = logging.getLogger(__name__)
 _TZ = ZoneInfo("Europe/Madrid")
@@ -277,13 +278,7 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Keep the comparison keys type-safe: EMT can mix a numeric estimate
         # (``5 min.``) with a clock-time row (``19:05:00``) in one response.
         # The former must never be compared directly with the latter.
-        arrivals.sort(key=lambda item: (
-            0, item["minutes"], ""
-        ) if isinstance(item.get("minutes"), int) else (
-            1, 0, item["scheduled_arrival"]
-        ) if item.get("scheduled_arrival") else (
-            2, 0, ""
-        ))
+        arrivals.sort(key=arrival_sort_key)
         minutes = [item["minutes"] for item in arrivals if isinstance(item.get("minutes"), int)]
         return {"arrivals": arrivals, "next_minutes": min(minutes) if minutes else None, "last_successful_update": observed_at, "stale": False}
 
