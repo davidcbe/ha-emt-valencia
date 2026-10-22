@@ -39,16 +39,20 @@ def _settings_schema(defaults: Mapping[str, Any]) -> vol.Schema:
 
 def _normalize_settings(user_input: Mapping[str, Any], favorites: list[dict[str, str]]) -> dict[str, Any]:
     """Store settings and structured favourites without a user-facing syntax."""
+    away_interval = int(user_input.get(
+        CONF_AWAY_SCAN_INTERVAL,
+        user_input.get(CONF_SCAN_INTERVAL, DEFAULT_AWAY_SCAN_INTERVAL),
+    ))
     return {
         CONF_MOBILE_DEVICES: list(user_input.get(CONF_MOBILE_DEVICES, [])),
         CONF_FAVORITE_STOPS: favorites,
-        CONF_SEARCH_RADIUS: int(user_input[CONF_SEARCH_RADIUS]),
-        CONF_MAX_NEARBY_STOPS: int(user_input[CONF_MAX_NEARBY_STOPS]),
-        CONF_SCAN_INTERVAL: int(user_input[CONF_AWAY_SCAN_INTERVAL]),
-        CONF_HOME_SCAN_INTERVAL: int(user_input[CONF_HOME_SCAN_INTERVAL]),
-        CONF_AWAY_SCAN_INTERVAL: int(user_input[CONF_AWAY_SCAN_INTERVAL]),
-        CONF_FAVORITES_SCAN_INTERVAL: int(user_input[CONF_FAVORITES_SCAN_INTERVAL]),
-        CONF_MOVEMENT_THRESHOLD: int(user_input[CONF_MOVEMENT_THRESHOLD]),
+        CONF_SEARCH_RADIUS: int(user_input.get(CONF_SEARCH_RADIUS, DEFAULT_SEARCH_RADIUS)),
+        CONF_MAX_NEARBY_STOPS: int(user_input.get(CONF_MAX_NEARBY_STOPS, DEFAULT_MAX_NEARBY_STOPS)),
+        CONF_SCAN_INTERVAL: away_interval,
+        CONF_HOME_SCAN_INTERVAL: int(user_input.get(CONF_HOME_SCAN_INTERVAL, DEFAULT_HOME_SCAN_INTERVAL)),
+        CONF_AWAY_SCAN_INTERVAL: away_interval,
+        CONF_FAVORITES_SCAN_INTERVAL: int(user_input.get(CONF_FAVORITES_SCAN_INTERVAL, DEFAULT_FAVORITES_SCAN_INTERVAL)),
+        CONF_MOVEMENT_THRESHOLD: int(user_input.get(CONF_MOVEMENT_THRESHOLD, DEFAULT_MOVEMENT_THRESHOLD)),
     }
 
 

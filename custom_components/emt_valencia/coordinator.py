@@ -144,7 +144,7 @@ class EMTValenciaDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         old = self._locations.get(key)
         if new and (old is None or distance_m(*old, *new) >= self.config[CONF_MOVEMENT_THRESHOLD]):
             self._force_nearby = True
-            self.async_request_refresh()
+            self.hass.async_create_task(self.async_request_refresh())
 
     async def async_refresh_nearby(self) -> None:
         self._force_nearby = True
